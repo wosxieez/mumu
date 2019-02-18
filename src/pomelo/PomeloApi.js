@@ -15,8 +15,8 @@ PomeloApi.createRoom = function (roomname, roominfo, username, callback) {
   queryEntry(username, function (host, port) {
     window.pomelo.init({ host, port }, function () {
       window.pomelo.request('connector.entryHandler.createRoom', { roomname, roominfo, username }, function (data) {
-        console.log(data.code)
         if (data.code === 0) {
+          window.pomelo.on('onNotification', PomeloApi.onNotification)
           PomeloApi.sendCMD({ name: CMD.Actions.St, value: true }) // 发送准备就绪指令
         }
       })
@@ -61,6 +61,10 @@ PomeloApi.sendCMD = function (cmd) {
   })
 }
 
+PomeloApi.onNotification = function (notification) {
+  PomeloApi.dispatchEvent({name: 'onNotification', data: notification})
+}
+
 // 查询入口服务
 function queryEntry(username, callback) {
   var route = 'gate.gateHandler.queryEntry';
@@ -81,9 +85,7 @@ function queryEntry(username, callback) {
   });
 }
 
-PomeloApi.onChat = function (data) {
-  console.log('收到数据', data)
-}
+EventProtocol.extend(PomeloApi);
 
 var CMD = {}
 

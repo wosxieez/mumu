@@ -73,15 +73,13 @@ var HallLayer =  BaseScene.extend({
         backgroundLayer.addChild(startSpt3);
         TouchUtil.addTouchEventListener(startSpt3,param3)
 
-
-
         return true;
     },
     login:function(user){
 
     },
     joinHallRoom:function(deskType){
-        this.callMethod("joinHallRoom",deskType);
+        GameApp.enterScene("FightScene")
     },
     /**
      * 帧刷新事件

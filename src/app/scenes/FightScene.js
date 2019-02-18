@@ -40,7 +40,45 @@ var FightLayer = BaseScene.extend({
 
         this.shuffleCard();
 
+        PomeloApi.addEventListener('onNotification', this.onNotification.bind(this))
+
+        //开速开始按钮
+        var that = this;
+        var param = {
+            onTouchEndedHandle : function(){
+                PomeloApi.createRoom('001', {count: 3}, 'wosxieez' + new Date().getMilliseconds());
+            }
+        }
+        var param2 = {
+            onTouchEndedHandle : function(){
+                PomeloApi.joinRoom('001', 'wosxieez' + new Date().getMilliseconds())
+            }
+        }
+        var param3 = {
+            onTouchEndedHandle : function(){
+                PomeloApi.joinRoom('001', 'wosxieez' + new Date().getMilliseconds())
+            }
+        }
+        var startSpt = display.newSprite("#hall_image_start.png",display.cx,350)
+        backgroundLayer.addChild(startSpt);
+        TouchUtil.addTouchEventListener(startSpt,param)
+
+        var startSpt2 = display.newSprite("#hall_image_start.png",display.cx,250)
+        backgroundLayer.addChild(startSpt2);
+        TouchUtil.addTouchEventListener(startSpt2,param2)
+
+        var startSpt3 = display.newSprite("#hall_image_start.png",display.cx,150)
+        backgroundLayer.addChild(startSpt3);
+        TouchUtil.addTouchEventListener(startSpt3,param3)
+
         return true;
+    },
+    onNotification: function (event) {
+        console.log('收到通知')
+        console.log(event.data.name == CMD.Notifications.onNewRound)
+        if (event.data.name == CMD.Notifications.onNewRound) {
+            this.onNewRound()
+        }
     },
     //有人加入桌子 ，初始化该人的信息
     joinRoom: function (clientDirect, user) {
@@ -106,7 +144,6 @@ var FightLayer = BaseScene.extend({
             self.orderMyCard(onHandleCardSpriteArr, onHand);
         }
         this.backgroundLayer_.performWithDelay(onComplete, 1.5);
-
     },
     //倒计时提示
     setVisibleWithCountDownTimerTips: function (visible, position, onComplete) {

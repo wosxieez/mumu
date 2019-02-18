@@ -1,0 +1,100 @@
+{
+    "project_type": "javascript",
+
+    "debugMode" : 1,
+    "showFPS" : true,
+    "frameRate" : 60,
+
+    "noCache" : false,
+    "id" : "gameCanvas",
+    "renderMode" : 0,
+    "engineDir":"frameworks/cocos2d-html5",
+
+    "modules" : ["cocos2d", "extensions", "external"],
+
+    "jsList" : [
+        "src/engin/cocos2dx/NodeEx.js",
+        "src/engin/cocos2dx/LayerEx.js",
+        "src/engin/cocos2dx/SpriteEx.js",
+        "src/engin/util/TouchUtil.js",
+        "src/engin/util/Math2d.js",
+        "src/engin/function.js",
+        "src/engin/device.js",
+        "src/engin/display.js",
+        "src/engin/ui.js",
+        "src/engin/audio.js",
+        "src/engin/transition.js",
+        "src/engin/util/Decoration.js",
+        "src/engin/util/Singleton.js",
+        "src/engin/util/EventProtocol.js",
+        "src/engin/util/Util.js",
+        "src/engin/util/Timer.js",
+        "src/engin/config/TimerEvent.js",
+        "src/engin/config/MapConstants.js",
+        "src/engin/effect/TransitionEffect.js",
+        "src/engin/components/ccstableview/CCSTableView.js",
+        "src/engin/components/ccslistview/CCSListView.js",
+        "src/engin/components/ccsscrollView/CCSScrollView.js",
+        "src/engin/mvcs/scene/BaseScene.js",
+        "src/engin/EnginInit.js",
+
+
+        "src/pomelo/PomeloApi.js",
+        "src/pomelo/constant.js",
+        "src/pomelo/Round.js",
+        "src/pomelo/CardUtil.js",
+        "src/pomelo/RoomList.js",
+        "src/pomelo/UserList.js",
+        "src/pomelo/action/ServerNotifyManager.js",
+        "src/pomelo/action/LoginAction.js",
+        "src/pomelo/action/CancleAction.js",
+        "src/pomelo/action/CardAction.js",
+        "src/pomelo/action/EatAction.js",
+        "src/pomelo/action/GangAction.js",
+        "src/pomelo/action/HuAction.js",
+        "src/pomelo/action/PaoAction.js",
+        "src/pomelo/action/PengAction.js",
+        "src/pomelo/action/RoomAction.js",
+        "src/pomelo/action/WeiAction.js",
+        "src/pomelo/action/UserAction.js",
+        "src/pomelo/action/RoundAction.js",
+        "src/pomelo/action/FightAIAction.js",
+        "src/underscore-min.js",
+
+
+        "src/app/GameApp.js",
+        "src/config.js",
+        "src/app/config/constants/SceneConstants.js",
+        "src/app/config/constants/FightConstants.js",
+        "src/app/scenes/HallScene.js",
+        "src/app/scenes/FightScene.js",
+
+
+        "src/app/handle/BaseHandle.js",
+        "src/app/handle/FightHandle.js",
+        "src/app/handle/HallHandle.js",
+
+
+        "src/app/model/BaseModel.js",
+        "src/app/model/LoginModel.js",
+        "src/app/model/FightModel.js",
+
+        "src/app/vo/FightVo.js",
+
+
+        "src/app/view/CountDownTimerSprite.js",
+        "src/app/view/AvatarSprite.js",
+        "src/app/view/CardSprite.js",
+        "src/app/view/CardOprateTipsSprite.js",
+        "src/app/util/CardAnimation.js",
+        "src/app/util/CardTool.js",
+
+
+
+
+
+        "src/build.js"
+
+
+    ]
+}

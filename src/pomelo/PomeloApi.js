@@ -15,9 +15,9 @@ PomeloApi.createRoom = function (roomname, roominfo, username, callback) {
   queryEntry(username, function (host, port) {
     window.pomelo.init({ host, port }, function () {
       window.pomelo.request('connector.entryHandler.createRoom', { roomname, roominfo, username }, function (data) {
+        console.log(data)
         if (data.code === 0) {
           window.pomelo.on('onNotification', PomeloApi.onNotification)
-          PomeloApi.sendCMD({ name: CMD.Actions.St, value: true }) // 发送准备就绪指令
         }
       })
     })
@@ -55,8 +55,8 @@ PomeloApi.send = function (msg) {
   })
 }
 
-PomeloApi.sendCMD = function (cmd) {
-  window.pomelo.request('chat.roomHandler.sendCMD', cmd, function (data) {
+PomeloApi.sendAction = function (action) {
+  window.pomelo.request('chat.roomHandler.sendAction', action, function (data) {
     console.log('send cmd result data', data)
   })
 }

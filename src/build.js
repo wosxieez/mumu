@@ -1421,7 +1421,7 @@ require.register("pomelonode-pomelo-jsclient-websocket/lib/pomelo-client.js", fu
     };
     var onclose = function(event){
       pomelo.emit('close',event);
-      console.error('socket close: ', event);
+      // console.error('socket close: ', event);
     };
     socket = new WebSocket(url);
     socket.binaryType = 'arraybuffer';

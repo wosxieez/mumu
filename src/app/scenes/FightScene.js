@@ -20,7 +20,6 @@ var FightLayer = BaseScene.extend({
         bg_down.setContentSizeScale(display.width, 159);
         backgroundLayer.addChild(bg_down);
 
-
         //加载三个头像显示
         var flysLayer = this.flysLayer_
         var avatarSprite0 = new AvatarSprite(); //上家
@@ -38,112 +37,75 @@ var FightLayer = BaseScene.extend({
         flysLayer.addChild(avatarSprite2);
         this.avatarSprite2_ = avatarSprite2
 
-        this.shuffleCard();
-
         PomeloApi.addEventListener('onNotification', this.onNotification.bind(this))
 
         //开速开始按钮
         var that = this;
         var param = {
-            onTouchEndedHandle : function(){
-                PomeloApi.createRoom('001', {count: 3}, 'wosxieez' + new Date().getMilliseconds());
+            onTouchEndedHandle: function () {
+                PomeloApi.createRoom('001', { count: 3 }, 'wosxieez' + new Date().getMilliseconds());
             }
         }
         var param2 = {
-            onTouchEndedHandle : function(){
+            onTouchEndedHandle: function () {
                 PomeloApi.joinRoom('001', 'wosxieez' + new Date().getMilliseconds())
             }
         }
-        var param3 = {
-            onTouchEndedHandle : function(){
-                PomeloApi.joinRoom('001', 'wosxieez' + new Date().getMilliseconds())
-            }
-        }
-        var startSpt = display.newSprite("#hall_image_start.png",display.cx,350)
+        var startSpt = display.newSprite("#hall_image_start.png", display.cx, 350)
         backgroundLayer.addChild(startSpt);
-        TouchUtil.addTouchEventListener(startSpt,param)
+        TouchUtil.addTouchEventListener(startSpt, param)
 
-        var startSpt2 = display.newSprite("#hall_image_start.png",display.cx,250)
+        var startSpt2 = display.newSprite("#hall_image_start.png", display.cx, 250)
         backgroundLayer.addChild(startSpt2);
-        TouchUtil.addTouchEventListener(startSpt2,param2)
-
-        var startSpt3 = display.newSprite("#hall_image_start.png",display.cx,150)
-        backgroundLayer.addChild(startSpt3);
-        TouchUtil.addTouchEventListener(startSpt3,param3)
+        TouchUtil.addTouchEventListener(startSpt2, param2)
 
         return true;
     },
     onNotification: function (event) {
-        console.log('收到通知')
+        console.log('收到通知', event)
         console.log(event.data.name == CMD.Notifications.onNewRound)
         if (event.data.name == CMD.Notifications.onNewRound) {
-            this.onNewRound()
+            this.onNewRound(event.data.data)
         }
     },
-    //有人加入桌子 ，初始化该人的信息
-    joinRoom: function (clientDirect, user) {
-        var keySptName = "avatarSprite" + clientDirect + "_";
-        this[keySptName].initViw(user);
+    onNewRound: function (roominfo) {
+        console.log('收到开局通知', roominfo)
+
+        // 新的一局开始
+        // 显示空闲的桌上的空闲牌
+        this.freeCardSprites = []
+        for (var i = 0; i < roominfo.cards.length; i++) {
+            var cardSprite = new CardSprite();
+            cardSprite.initData({ cardId: i });
+            cardSprite.initView(false, 'fight_big_card.png');
+            this.batch_.addChild(cardSprite);
+            cardSprite.setPosition(display.cx, display.top + 40);
+            transition.moveTo(cardSprite, { delay: i * 0.01, time: 0.1, y: display.cy + 200 + i * .5 })
+            this.freeCardSprites.push(cardSprite)
+        }
+
+        // 生存自己的牌 并排序
+        this.myCardSprites = []
+        for (var i = 0; i < roominfo.users[0].cards.length; i++) {
+            var cardSprite = new CardSprite();
+            cardSprite.initData(roominfo.users[0].cards[i])
+            cardSprite.initView(true, FightConstants.big_card)
+            this.batch_.addChild(cardSprite)
+            cardSprite.setPosition(display.cx, display.top + 40)
+            cardSprite.setTouch(this.onCardTouchEnd.bind(this))
+            this.myCardSprites.push(cardSprite)
+        }
+
+        this.orderMyCard()
     },
-    /**
-     * 发牌
-     */
-    onNewRound: function (cards) {
-        var onHand = cards[1].onHand;
-        //庄家 以及 玩家分配过来并初始化
-        //纯牌的夹子安排
-        this.fight_card_storage_.setVisible(true);//存牌的夹子
-        var fight_card_storage = display.newSprite("#fight_up_card_storage.png", display.cx - 2, display.top - 140 + 5)
-        fight_card_storage.align(display.BOTTOM_CENTER);
-        this.batch_.addChild(fight_card_storage);
-
-        for (var i = 0; i < 80; i++) {
-            var cardSprite = this.allCardSpt_[80 - i - 1];//索引为0的放上面
-            cardSprite.initView(false, "fight_small_card.png");
-            cardSprite.setPosition(display.cx, display.top - 75 - 40 + i * 0.2);
+    onCardTouchEnd(cardSprite, data) {
+        this.orderMyCard()
+        console.log(data)
+        if (data.lastY >= display.cy) {
+            // 发送St命令 牌局开始
+            var cmd = {name: CMD.Actions.St, data: cardSprite.cardId}
+            PomeloApi.sendCMD(cmd)
         }
-
-
-        //开始发牌
-        var onHandleCardSpriteArr = [];
-        for (var i = 0; i < 20; i++) {
-            var index = i * 3;
-            var delay = i * 0.04;
-
-            var cardSprite0 = this.allCardSpt_[index];
-            cardSprite0.initView(false, "fight_big_card.png");
-            cardSprite0.setRotation(90);
-            transition.moveTo(cardSprite0, { delay: delay, time: 0.2, x: display.right + 100 })
-
-
-            var cardSprite1 = this.allCardSpt_[index + 1];
-            cardSprite1.initView(false, "fight_big_card.png");
-            transition.moveTo(cardSprite1, { delay: delay, time: 0.2, y: display.bottom - 115 });
-            onHandleCardSpriteArr.push(cardSprite1);
-
-            var cardSprite2 = this.allCardSpt_[index + 2];
-            cardSprite2.initView(false, "fight_big_card.png");
-            cardSprite2.setRotation(90);
-            transition.moveTo(cardSprite2, { delay: delay, time: 0.2, x: display.left - 100 })
-        }
-
-        var cardSprite3 = this.allCardSpt_[60];
-        cardSprite3.initView(false, "fight_big_card.png");
-        if (onHand.length > 20) {
-            transition.moveTo(cardSprite3, { time: 0.2, y: display.bottom - 115 });
-            onHandleCardSpriteArr.push(cardSprite3);
-        } else {
-            cardSprite3.setRotation(90);
-            transition.moveTo(cardSprite3, { delay: delay, time: 0.2, x: display.left - 100 })
-        }
-
-
-        //排列自己的牌
-        var self = this;
-        var onComplete = function () {
-            self.orderMyCard(onHandleCardSpriteArr, onHand);
-        }
-        this.backgroundLayer_.performWithDelay(onComplete, 1.5);
     },
     //倒计时提示
     setVisibleWithCountDownTimerTips: function (visible, position, onComplete) {
@@ -192,38 +154,14 @@ var FightLayer = BaseScene.extend({
         }
         this.cardOprateTipsSprite_.initView(enableSpriteArray);
     },
-    /**
-     * 生成80张牌  洗牌 动画
-     */
-    shuffleCard: function () {
-        var batch = this.batch_
-        this.allCardSpt_ = [];
-
-        var fight_card_storage = display.newSprite("#fight_card_storage.png", display.cx, display.top - 140)
-        fight_card_storage.align(display.BOTTOM_CENTER);
-        batch.addChild(fight_card_storage);
-        fight_card_storage.setVisible(false);
-        this.fight_card_storage_ = fight_card_storage;
-
-        //生成牌
-        for (var i = 0; i < 80; i++) {
-            var cardSprite = new CardSprite();
-            cardSprite.initData({ cardId: i });
-            cardSprite.initView(false, "fight_wash_card.png");
-            batch.addChild(cardSprite);
-            cardSprite.setPosition(display.cx, display.top + 40);
-            this.allCardSpt_.push(cardSprite)
-            transition.moveTo(cardSprite, { delay: i * 0.01, time: 0.1, y: display.cy + i * .5 })
-        }
-    },
-    /**
-     * 第一次排列牌
-     */
-    orderMyCard: function (onHandleCardSprite, onHand) {
+    // 排序自己的牌
+    orderMyCard: function () {
+        var myCards = []
+        this.myCardSprites.forEach(cardSprite => {
+            myCards.push(cardSprite.cardId)
+        })
         //排列我的牌
-        //        var loginModel = Singleton.getInstance("LoginModel");
-        //        var me = loginModel.user;
-        var outputCard = CardUtil.riffle(onHand);
+        var outputCard = CardUtil.riffle(myCards);
         var behaveNum = checkint(outputCard.length / 2)
 
         var onHandleCardSpriteArr = [];
@@ -241,25 +179,19 @@ var FightLayer = BaseScene.extend({
             for (var j = 0; j < oneOutputCardArr.length; j++) {
                 var y = display.bottom + 115 + j * 115 / 2;
                 var oneOutputCard = oneOutputCardArr[j];
-                var cardSprite = onHandleCardSprite[index];
+                var cardSprite = this.myCardSprites[index];
                 cardSprite.setCardArrayIndex(i, j);
-                cardSprite.initData({ cardId: oneOutputCard });
+                cardSprite.initData(oneOutputCard);
                 cardSprite.initView(true, FightConstants.big_card);
                 cardSprite.setPosition(x, y);
                 cardSprite.setLocalZOrder(oneOutputCardArr.length - j);
-                cardSprite.setTouch();
 
                 oneonHandleCardSpriteArr.push(cardSprite)
                 index++;
             }
             onHandleCardSpriteArr.push(oneonHandleCardSpriteArr)
         }
-        //存储起来
-        FightVo.onHandleCardSpriteArr_ = onHandleCardSpriteArr;
     },
-
-
-
 
     /**
      * 帧刷新事件
@@ -270,11 +202,6 @@ var FightLayer = BaseScene.extend({
     }
 });
 
-
-
-
-
-
 var FightScene = cc.Scene.extend({
     onEnter: function () {
         this._super();
@@ -282,12 +209,6 @@ var FightScene = cc.Scene.extend({
 
         var layer = new FightLayer();
         this.addChild(layer);
-
-        //依赖注入mvc中的视图
-        var handle = Singleton.getInstance("FightHandle");
-        handle.setView(layer);
-        layer.setHandle(handle);
-        handle.init();
     }
 });
 

@@ -62,7 +62,7 @@ PomeloApi.sendAction = function (action) {
 }
 
 PomeloApi.onNotification = function (notification) {
-  PomeloApi.dispatchEvent({name: 'onNotification', data: notification})
+  PomeloApi.dispatchEvent({ name: 'onNotification', data: notification })
 }
 
 // 查询入口服务
@@ -87,9 +87,7 @@ function queryEntry(username, callback) {
 
 EventProtocol.extend(PomeloApi);
 
-var CMD = {}
-
-CMD.Actions = {
+var Actions = {
   St: 'st',         // 状态
   Ti: "ti",         // 提
   Pao: "pao",       // 跑
@@ -101,7 +99,7 @@ CMD.Actions = {
   Idle: "idle"      // 无操作
 }
 
-CMD.Notifications = {
+var Notifications = {
   onJoinRoom: 1,    // 新玩家加入通知
   onNewRound: 2,    // 开局通知
   onDisCard: 3,    //等待玩家出牌
@@ -112,5 +110,7 @@ CMD.Notifications = {
   onWin: 7,    // 玩家胡牌
   onTi: 8,    // 玩家提牌
   onPao: 9,    // 玩家跑牌
-  onNewCard: 10   // 新底牌
+  onNewCard: 10,   // 新底牌
+  doPeng: 12,   // 检查碰
+  doEat: 13     // 检查吃
 }

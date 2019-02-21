@@ -63,9 +63,15 @@ var FightLayer = BaseScene.extend({
     },
     onNotification: function (event) {
         console.log('收到通知', event)
-        console.log(event.data.name == CMD.Notifications.onNewRound)
-        if (event.data.name == CMD.Notifications.onNewRound) {
-            this.onNewRound(event.data.data)
+        switch (event.data.name) {
+            case Notifications.onNewRound:
+                this.onNewRound(event.data.data)
+                break;
+            case Notifications.doPeng:
+            this.doPeng(event.data.data)
+                break
+            default:
+                break;
         }
     },
     onNewRound: function (roominfo) {
@@ -98,13 +104,16 @@ var FightLayer = BaseScene.extend({
 
         this.orderMyCard()
     },
+    doPeng: function (data) {
+        console.log('收到检查碰操作', data)
+    },
     onCardTouchEnd(cardSprite, data) {
         this.orderMyCard()
         console.log(data)
         if (data.lastY >= display.cy) {
             // 发送St命令 牌局开始
-            var cmd = {name: CMD.Actions.St, data: cardSprite.cardId}
-            PomeloApi.sendCMD(cmd)
+            var action = { name: Actions.St, data: cardSprite.cardId }
+            PomeloApi.sendAction(action)
         }
     },
     //倒计时提示

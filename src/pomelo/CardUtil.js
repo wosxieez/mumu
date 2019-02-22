@@ -444,15 +444,14 @@ CardUtil.shouShun = function(cards){
 
 
 CardUtil.canPeng = function(cardsOnHand, currentCard){
-  var canPeng = false;
+  console.log('判断是否能碰', cardsOnHand, currentCard)
+  var canPeng = null;
   var countedCards = _.countBy(cardsOnHand, function(c){return c;});
   if(countedCards[currentCard] === 2){
-    canPeng = true;
+    canPeng = [currentCard, currentCard];
   }
   return canPeng;
 };
-
-
 
 CardUtil.canGang = function(cardsOnHand, cardsOnTable, currentCard){
   var canGang = false;
@@ -478,7 +477,9 @@ CardUtil.canGang = function(cardsOnHand, cardsOnTable, currentCard){
 // 2. 2、7、10
 // 3. 大小混搭
 CardUtil.canChi = function(cards, currentCard){
+  console.log('判断是否能吃', cards, currentCard)
   var canChi = false;
+  var canChiCards = []
   var countedCards = _.countBy(cards, function(c){return c;});
   _.each(countedCards, function(value, key){
     if(value === 3){

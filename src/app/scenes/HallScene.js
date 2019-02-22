@@ -22,7 +22,6 @@ var HallLayer =  BaseScene.extend({
         hall_image_down.setContentSizeScale(display.width,100);
         backgroundLayer.addChild(hall_image_down);
 
-
         //中间的listview 选择房间类型
         var param = {
             size : cc.size(960, 255),

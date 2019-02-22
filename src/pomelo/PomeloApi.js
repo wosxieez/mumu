@@ -88,7 +88,7 @@ function queryEntry(username, callback) {
 EventProtocol.extend(PomeloApi);
 
 var Actions = {
-  St: 'st',         // 状态
+  St: 'st',         // 出牌
   Ti: "ti",         // 提
   Pao: "pao",       // 跑
   Wei: "wei",       // 偎
@@ -102,6 +102,7 @@ var Actions = {
 var Notifications = {
   onJoinRoom: 1,    // 新玩家加入通知
   onNewRound: 2,    // 开局通知
+  onPoker: 99,      // 发牌操纵
   onDisCard: 3,    //等待玩家出牌
   onCard: 4,    // 玩家出的牌
   onEat: 5,    // 玩家吃牌
@@ -111,6 +112,7 @@ var Notifications = {
   onTi: 8,    // 玩家提牌
   onPao: 9,    // 玩家跑牌
   onNewCard: 10,   // 新底牌
-  doPeng: 12,   // 检查碰
-  doEat: 13     // 检查吃
+  checkPeng: 12,   // 检查碰
+  checkEat: 13,     // 检查吃
+  checkSt: 14       // 检查出牌
 }

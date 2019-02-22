@@ -6,7 +6,9 @@ var FightLayer = BaseScene.extend({
     ctor: function () {
         this._super();
 
-        //背景层
+        //---------------------------------------------------------------------------------------------
+        // 背景
+        //---------------------------------------------------------------------------------------------
         var backgroundLayer = this.backgroundLayer_;
         var bg = display.newColorLayer(display.COLOR_BLUE);
         backgroundLayer.addChild(bg);
@@ -20,6 +22,9 @@ var FightLayer = BaseScene.extend({
         bg_down.setContentSizeScale(display.width, 159);
         backgroundLayer.addChild(bg_down);
 
+        //---------------------------------------------------------------------------------------------
+        // 图像显示
+        //---------------------------------------------------------------------------------------------
         //加载三个头像显示
         var flysLayer = this.flysLayer_
         var avatarSprite0 = new AvatarSprite(); //上家
@@ -37,10 +42,15 @@ var FightLayer = BaseScene.extend({
         flysLayer.addChild(avatarSprite2);
         this.avatarSprite2_ = avatarSprite2
 
-        PomeloApi.addEventListener('onNotification', this.onNotification.bind(this))
+        // 桌子上当前翻开的牌
+        this.dealCardSprite = new CardSprite();
+        this.dealCardSprite.initData(1);
+        this.dealCardSprite.initView(true, FightConstants.full_card);
+        this.batch_.addChild(this.dealCardSprite)
+        this.dealCardSprite.setVisible(false)
+        this.dealCardSprite.setPosition(display.left + 200, display.cy + 200);
 
         //开速开始按钮
-        var that = this;
         var param = {
             onTouchEndedHandle: function () {
                 PomeloApi.createRoom('001', { count: 3 }, 'wosxieez' + new Date().getMilliseconds());
@@ -56,26 +66,87 @@ var FightLayer = BaseScene.extend({
         TouchUtil.addTouchEventListener(startSpt, param)
 
         var startSpt2 = display.newSprite("#hall_image_start.png", display.cx, 250)
-        backgroundLayer.addChild(startSpt2);
+        backgroundLayer.addChild(startSpt2)
         TouchUtil.addTouchEventListener(startSpt2, param2)
+
+        //---------------------------------------------------------------------------------------------
+        // 操纵按钮层
+        //---------------------------------------------------------------------------------------------
+        // 碰按钮
+        this.pengSprite = display.newSprite('#oprate_peng0.png', display.right - 100, display.cy)
+        this.pengSprite.setVisible(false)
+        TouchUtil.addTouchEventListener(this.pengSprite, {
+            onTouchEndedHandle: () => {
+                const action = { name: Actions.Peng, data: this.canPengCards }
+                PomeloApi.sendAction(action)
+            }
+        })
+        this.pengSprite.setTouchEnabled(false)
+        this.tipLayer_.addChild(this.pengSprite)
+
+        // 吃按钮
+        this.chiSprite = display.newSprite('#oprate_chi0.png', display.right - 100, display.cy + 100)
+        this.chiSprite.setVisible(false)
+        this.tipLayer_.addChild(this.chiSprite)
+
+        // 胡按钮
+        this.huSprite = display.newSprite('#oprate_hu0.png', display.right - 100, display.cy - 100)
+        this.huSprite.setVisible(false)
+        this.tipLayer_.addChild(this.huSprite)
+
+        // 过按钮
+        this.closeSprite = display.newSprite('#oprate_close0.png', display.right - 100, display.cy - 200)
+        this.closeSprite.setVisible(false)
+        this.tipLayer_.addChild(this.closeSprite)
+
+        //---------------------------------------------------------------------------------------------
+        // 初始化
+        //---------------------------------------------------------------------------------------------
+        this.canSt = false // 默认不允许出牌
+        PomeloApi.addEventListener('onNotification', this.onNotification.bind(this))
 
         return true;
     },
     onNotification: function (event) {
         console.log('收到通知', event)
-        switch (event.data.name) {
+        const notification = event.data
+        switch (notification.name) {
             case Notifications.onNewRound:
-                this.onNewRound(event.data.data)
+                this.onNewRound(notification.data)
                 break;
-            case Notifications.doPeng:
-            this.doPeng(event.data.data)
+            case Notifications.checkSt: // 请求出牌
+                this.canSt = true
+                this.setVisibleWithFingerTips(true, {x: display.cx, y: display.cy})
+                break
+            case Notifications.onPoker:
+                this.onPoker(notification.data)
+                break
+            case Notifications.checkPeng:
+                this.checkPeng(notification.data)
+                break
+            case Notifications.onPeng: 
+                this.onPeng(notification.data)
+                break
+            case Notifications.checkEat:
+                this.checkEat(notification.data)
                 break
             default:
                 break;
         }
     },
+    initRoomInfo(roominfo) {
+        this.roominfo = roominfo
+        roominfo.users.some(user => {
+            if (user.username === PomeloApi.username) {
+                this.my = user
+                return true // 跳出循环
+            }
+        })
+    },
     onNewRound: function (roominfo) {
         console.log('收到开局通知', roominfo)
+
+        this.initRoomInfo(roominfo)
 
         // 新的一局开始
         // 显示空闲的桌上的空闲牌
@@ -92,9 +163,9 @@ var FightLayer = BaseScene.extend({
 
         // 生存自己的牌 并排序
         this.myCardSprites = []
-        for (var i = 0; i < roominfo.users[0].cards.length; i++) {
+        for (var i = 0; i < this.my.handCards.length; i++) {
             var cardSprite = new CardSprite();
-            cardSprite.initData(roominfo.users[0].cards[i])
+            cardSprite.initData(this.my.handCards[i])
             cardSprite.initView(true, FightConstants.big_card)
             this.batch_.addChild(cardSprite)
             cardSprite.setPosition(display.cx, display.top + 40)
@@ -104,20 +175,84 @@ var FightLayer = BaseScene.extend({
 
         this.orderMyCard()
     },
-    doPeng: function (data) {
+    onPoker: function (data) {
+        console.log('收到发牌信息', data)
+        this.initRoomInfo(data)
+        this.orderMyCard()
+        this.dealCardSprite.initData(data.deal_card)
+        this.dealCardSprite.initView(true, FightConstants.full_card);
+        this.dealCardSprite.setVisible(true)
+    },
+    checkPeng: function (data) {
         console.log('收到检查碰操作', data)
+
+        this.pengSprite.setVisible(false)
+        this.pengSprite.setTouchEnabled(false)
+
+        this.chiSprite.setVisible(false)
+        this.closeSprite.setVisible(false)
+
+        this.setVisibleWithCountDownTimerTips(false)
+
+        if (data.username === PomeloApi.username) {
+            this.canPengCards = CardUtil.canPeng(this.my.handCards, data.card)
+            if (!!this.canPengCards) {
+                console.log('可以碰的牌', this.canPengCards)
+                this.pengSprite.setVisible(true)
+                this.pengSprite.setTouchEnabled(true)
+                this.closeSprite.setVisible(true)
+            } else {
+                // 发送无操纵指令
+                const action = { name: Actions.Cancel, data: data.card }
+                PomeloApi.sendAction(action)
+            }
+        } else {
+            this.setVisibleWithCountDownTimerTips(true)
+        }
+    },
+    onPeng: function (data) {
+        console.log('收到玩家碰操纵', data)
+        this.initRoomInfo(data)
+        this.orderMyCard()
+    },
+    checkEat: function (data) {
+        console.log('收到检查吃操作', data)
+
+        this.pengSprite.setVisible(false)
+        this.pengSprite.setTouchEnabled(false)
+
+        this.chiSprite.setVisible(false)
+        this.closeSprite.setVisible(false)
+
+        this.setVisibleWithCountDownTimerTips(false)
+
+        if (data.username === PomeloApi.username) {
+            this.canEatCards = CardUtil.canChi(this.my.handCards, data.card)
+            if (!!this.canEatCards) {
+                console.log('可以吃的牌', this.canEatCards)
+                this.chiSprite.setVisible(true)
+                this.closeSprite.setVisible(true)
+            } else {
+                // 发送无操纵指令
+                const action = { name: Actions.Cancel, data: data.card }
+                PomeloApi.sendAction(action)
+            }
+        } else {
+            this.setVisibleWithCountDownTimerTips(true)
+        }
     },
     onCardTouchEnd(cardSprite, data) {
-        this.orderMyCard()
-        console.log(data)
-        if (data.lastY >= display.cy) {
+        if (data.lastY > display.cy && this.canSt) {
             // 发送St命令 牌局开始
             var action = { name: Actions.St, data: cardSprite.cardId }
             PomeloApi.sendAction(action)
+            this.canSt = false
+            this.setVisibleWithFingerTips(false)
         }
+        this.orderMyCard()
     },
     //倒计时提示
-    setVisibleWithCountDownTimerTips: function (visible, position, onComplete) {
+    setVisibleWithCountDownTimerTips: function (visible, onComplete) {
         if (this.countDownTimerSprite_ == null) {
             var tipLayer = this.tipLayer_;
             var countDownTimerSprite = new CountDownTimerSprite();
@@ -126,8 +261,8 @@ var FightLayer = BaseScene.extend({
         }
         if (visible) {
             this.countDownTimerSprite_.setVisible(true);
-            this.countDownTimerSprite_.setPosition(position.x, position.y);
-            this.countDownTimerSprite_.start(15, onComplete)
+            this.countDownTimerSprite_.setPosition(display.cx, display.cy);
+            this.countDownTimerSprite_.start(5, onComplete)
         } else {
             this.countDownTimerSprite_.stop();
             this.countDownTimerSprite_.setVisible(false);
@@ -153,24 +288,13 @@ var FightLayer = BaseScene.extend({
             this.fingerTips_.setVisible(false);
         }
     },
-    //提示用户 吃、碰、胡等
-    cardOprateTipsShow: function (enableSpriteArray) {
-        if (!this.cardOprateTipsSprite_) {
-            var cardOprateTipsSprite = new CardOprateTipsSprite();
-            cardOprateTipsSprite.setPosition(display.cx, display.cy);
-            this.tipLayer_.addChild(cardOprateTipsSprite);
-            this.cardOprateTipsSprite_ = cardOprateTipsSprite;
-        }
-        this.cardOprateTipsSprite_.initView(enableSpriteArray);
-    },
     // 排序自己的牌
     orderMyCard: function () {
-        var myCards = []
         this.myCardSprites.forEach(cardSprite => {
-            myCards.push(cardSprite.cardId)
+            cardSprite.setVisible(false)
         })
         //排列我的牌
-        var outputCard = CardUtil.riffle(myCards);
+        var outputCard = CardUtil.riffle(this.my.handCards);
         var behaveNum = checkint(outputCard.length / 2)
 
         var onHandleCardSpriteArr = [];
@@ -193,6 +317,7 @@ var FightLayer = BaseScene.extend({
                 cardSprite.initData(oneOutputCard);
                 cardSprite.initView(true, FightConstants.big_card);
                 cardSprite.setPosition(x, y);
+                cardSprite.setVisible(true)
                 cardSprite.setLocalZOrder(oneOutputCardArr.length - j);
 
                 oneonHandleCardSpriteArr.push(cardSprite)
@@ -209,7 +334,7 @@ var FightLayer = BaseScene.extend({
     tick: function (dt) {
         this._super(dt);
     }
-});
+})
 
 var FightScene = cc.Scene.extend({
     onEnter: function () {
@@ -219,7 +344,4 @@ var FightScene = cc.Scene.extend({
         var layer = new FightLayer();
         this.addChild(layer);
     }
-});
-
-
-
+})

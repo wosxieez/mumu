@@ -57,7 +57,7 @@ PomeloApi.send = function (msg) {
 
 PomeloApi.sendAction = function (action) {
   window.pomelo.request('chat.roomHandler.sendAction', action, function (data) {
-    console.log('send cmd result data', data)
+    // console.log('send cmd result data', data)
   })
 }
 
@@ -70,6 +70,7 @@ function queryEntry(username, callback) {
   var route = 'gate.gateHandler.queryEntry';
   window.pomelo.init({
     host: '127.0.0.1',
+    // host: '192.168.0.3',
     port: 3014,
     log: true
   }, function () {

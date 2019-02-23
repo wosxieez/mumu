@@ -483,10 +483,13 @@ CardUtil.canChi = function(cards, currentCard){
   if (countedCards[currentCard - 1]) {
     if (countedCards[currentCard - 2] && currentCard !== 11 && currentCard !== 12) {
       canChiCards.push([currentCard - 1, currentCard - 2]) // 判断8在尾部 查询 6 7 '8'  尾牌不能等于 11 12
-    } else if (countedCards[currentCard + 1] && currentCard !== 10 && currentCard !== 11) {
+    } 
+    if (countedCards[currentCard + 1] && currentCard !== 10 && currentCard !== 11) {
       canChiCards.push([currentCard - 1, currentCard + 1]) // 判断8在中部 查询 7 '8' 9  中牌不能等于 10 11
     }
-  } else if (countedCards[currentCard + 1]) {
+  } 
+  
+  if (countedCards[currentCard + 1]) {
     if (countedCards[currentCard + 2]) {
       canChiCards.push([currentCard + 1, currentCard + 2]) // 判断8在首部 查询 '8' 9 10 首牌不能等于 9 10
     }

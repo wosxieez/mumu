@@ -9,18 +9,18 @@ var FightLayer = BaseScene.extend({
         //---------------------------------------------------------------------------------------------
         // 背景
         //---------------------------------------------------------------------------------------------
-        var backgroundLayer = this.backgroundLayer_;
+        var backgroundLayer = this.backgroundLayer_
         var bg = display.newColorLayer(display.COLOR_BLUE);
-        backgroundLayer.addChild(bg);
+        backgroundLayer.addChild(bg)
 
         var bg = display.newSprite("#fight_bg.png", display.cx, display.cy, null)
-        bg.setContentSizeScale(display.width, display.height);
-        backgroundLayer.addChild(bg);
+        bg.setContentSizeScale(display.width, display.height)
+        backgroundLayer.addChild(bg)
 
         var bg_down = display.newSprite("#fight_down_bg.png")
-        bg_down.align(display.BOTTOM_LEFT, display.cx, 0);
-        bg_down.setContentSizeScale(display.width, 159);
-        backgroundLayer.addChild(bg_down);
+        bg_down.align(display.BOTTOM_LEFT, display.cx, 0)
+        bg_down.setContentSizeScale(display.width, 159)
+        backgroundLayer.addChild(bg_down)
 
         //---------------------------------------------------------------------------------------------
         // 图像显示
@@ -42,6 +42,18 @@ var FightLayer = BaseScene.extend({
         flysLayer.addChild(avatarSprite2);
         this.avatarSprite2_ = avatarSprite2
 
+        //---------------------------------------------------------------------------------------------
+        // 生成80张牌
+        //---------------------------------------------------------------------------------------------
+        this.freeCardSprites = []
+        this.myHandCardSprites = []
+        this.myGroupCardSprites = []
+        this.myPassCardSprites = []
+        this.preGroupCardSprites = []
+        this.prePassCardSprites = []
+        this.nextGroupCardSprites = []
+        this.nextPassCardSprites = []
+
         // 桌子上当前翻开的牌
         this.dealCardSprite = new CardSprite();
         this.dealCardSprite.initData(1);
@@ -49,25 +61,6 @@ var FightLayer = BaseScene.extend({
         this.batch_.addChild(this.dealCardSprite)
         this.dealCardSprite.setVisible(false)
         this.dealCardSprite.setPosition(display.left + 200, display.cy + 200);
-
-        //开速开始按钮
-        var param = {
-            onTouchEndedHandle: function () {
-                PomeloApi.createRoom('001', { count: 3 }, 'wosxieez' + new Date().getMilliseconds());
-            }
-        }
-        var param2 = {
-            onTouchEndedHandle: function () {
-                PomeloApi.joinRoom('001', 'wosxieez' + new Date().getMilliseconds())
-            }
-        }
-        var startSpt = display.newSprite("#hall_image_start.png", display.cx, 350)
-        backgroundLayer.addChild(startSpt);
-        TouchUtil.addTouchEventListener(startSpt, param)
-
-        var startSpt2 = display.newSprite("#hall_image_start.png", display.cx, 250)
-        backgroundLayer.addChild(startSpt2)
-        TouchUtil.addTouchEventListener(startSpt2, param2)
 
         //---------------------------------------------------------------------------------------------
         // 操纵按钮层
@@ -121,7 +114,6 @@ var FightLayer = BaseScene.extend({
         return true;
     },
     onNotification: function (event) {
-        console.log('收到通知', event)
         const notification = event.data
         switch (notification.name) {
             case Notifications.onNewRound:
@@ -152,55 +144,38 @@ var FightLayer = BaseScene.extend({
     },
     initRoomInfo(roominfo) {
         this.roominfo = roominfo
-        roominfo.users.some(user => {
-            if (user.username === PomeloApi.username) {
-                this.my = user
-                return true // 跳出循环
+        for (var i = 0; i < roominfo.users.length; i++) {
+            if (roominfo.users[i].username == PomeloApi.username) {
+                var endUsers = roominfo.users.slice(i)
+                var startUsers = roominfo.users.slice(0, i)
+                var orderUsers = endUsers.concat(startUsers)
+                this.my = orderUsers[0]
+                this.next = orderUsers[1]
+                this.pre = orderUsers.pop()
+                break
             }
-        })
+        }
+        console.log('当前玩家', this.my.username)
+        console.log('下个玩家', this.next.username)
+        console.log('上个玩家', this.pre.username)
     },
     onNewRound: function (roominfo) {
         console.log('收到开局通知', roominfo)
-
         this.initRoomInfo(roominfo)
-
-        // 新的一局开始
-        // 显示空闲的桌上的空闲牌
-        this.freeCardSprites = []
-        for (var i = 0; i < roominfo.cards.length; i++) {
-            var cardSprite = new CardSprite();
-            cardSprite.initData({ cardId: i });
-            cardSprite.initView(false, 'fight_big_card.png');
-            this.batch_.addChild(cardSprite);
-            cardSprite.setPosition(display.cx, display.top + 40);
-            transition.moveTo(cardSprite, { delay: i * 0.01, time: 0.1, y: display.cy + 200 + i * .5 })
-            this.freeCardSprites.push(cardSprite)
-        }
-
-        // 生存自己的牌 并排序
-        this.myCardSprites = []
-        for (var i = 0; i < this.my.handCards.length; i++) {
-            var cardSprite = new CardSprite();
-            cardSprite.initData(this.my.handCards[i])
-            cardSprite.initView(true, FightConstants.big_card)
-            this.batch_.addChild(cardSprite)
-            cardSprite.setPosition(display.cx, display.top + 40)
-            cardSprite.setTouch(this.onCardTouchEnd.bind(this))
-            this.myCardSprites.push(cardSprite)
-        }
-
-        this.orderMyCard()
+        this.updateFreeCardSprites()
+        this.updateMyHandCardSprites()
+        this.updateMyHandCardSpritesOrder()
     },
     onPoker: function (data) {
-        console.log('收到发牌信息', data)
+        // console.log('收到发牌信息', data)
         this.initRoomInfo(data)
-        this.orderMyCard()
+        this.updateMyHandCardSpritesOrder()
         this.dealCardSprite.initData(data.deal_card)
         this.dealCardSprite.initView(true, FightConstants.full_card);
         this.dealCardSprite.setVisible(true)
     },
     checkPeng: function (data) {
-        console.log('收到检查碰操作', data)
+        console.log('收到检查碰操作', data.username, data.card)
 
         this.pengSprite.setVisible(false)
         this.pengSprite.setTouchEnabled(false)
@@ -228,12 +203,15 @@ var FightLayer = BaseScene.extend({
         }
     },
     onPeng: function (data) {
-        console.log('收到玩家碰操纵', data)
+        // console.log('收到玩家碰操纵', data)
         this.initRoomInfo(data)
-        this.orderMyCard()
+        this.updateMyGroupCardSprites()
+        this.updatePreGroupCardSprites()
+        this.updateNextGroupCardSprites()
+        this.updateMyHandCardSpritesOrder()
     },
     checkEat: function (data) {
-        console.log('收到检查吃操作', data)
+        console.log('收到检查吃操作', data.username, data.card)
 
         this.pengSprite.setVisible(false)
         this.pengSprite.setTouchEnabled(false)
@@ -261,9 +239,12 @@ var FightLayer = BaseScene.extend({
         }
     },
     onEat: function (data) {
-        console.log('收到玩家吃操纵', data)
+        // console.log('收到玩家吃操纵', data)
         this.initRoomInfo(data)
-        this.orderMyCard()
+        this.updateMyGroupCardSprites()
+        this.updatePreGroupCardSprites()
+        this.updateNextGroupCardSprites()
+        this.updateMyHandCardSpritesOrder()
     },
     onCardTouchEnd(cardSprite, data) {
         if (data.lastY > display.cy && this.canSt) {
@@ -273,7 +254,7 @@ var FightLayer = BaseScene.extend({
             this.canSt = false
             this.setVisibleWithFingerTips(false)
         }
-        this.orderMyCard()
+        this.updateMyHandCardSpritesOrder()
     },
     //倒计时提示
     setVisibleWithCountDownTimerTips: function (visible, onComplete) {
@@ -284,8 +265,8 @@ var FightLayer = BaseScene.extend({
             this.countDownTimerSprite_ = countDownTimerSprite;
         }
         if (visible) {
-            this.countDownTimerSprite_.setVisible(true);
-            this.countDownTimerSprite_.setPosition(display.cx, display.cy);
+            this.countDownTimerSprite_.setVisible(true)
+            this.countDownTimerSprite_.setPosition(display.cx, display.cy)
             this.countDownTimerSprite_.start(5, onComplete)
         } else {
             this.countDownTimerSprite_.stop();
@@ -312,9 +293,115 @@ var FightLayer = BaseScene.extend({
             this.fingerTips_.setVisible(false);
         }
     },
-    // 排序自己的牌
-    orderMyCard: function () {
-        this.myCardSprites.forEach(cardSprite => {
+    updateFreeCardSprites: function () {
+        var cardSprite 
+        const oldFreeCardSprites = this.freeCardSprites
+        this.freeCardSprites = []
+        for (var i = 0; i < this.roominfo.cards.length; i++) {
+            cardSprite = oldFreeCardSprites.pop()
+            if (!cardSprite) {
+                cardSprite = new CardSprite()
+                this.batch_.addChild(cardSprite);
+            }
+            cardSprite.initData({ cardId: i });
+            cardSprite.initView(false, 'fight_big_card.png');
+            cardSprite.setPosition(display.cx, display.cy + 200 + i * .5);
+            this.freeCardSprites.push(cardSprite)
+        }
+    },
+    updateMyHandCardSprites: function () {
+        var cardSprite 
+        const oldMyHandCardSprites = this.myHandCardSprites
+        this.myHandCardSprites = []
+        for (var i = 0; i < this.my.handCards.length; i++) {
+            cardSprite = oldMyHandCardSprites.pop()
+            if (!cardSprite) {
+                cardSprite = new CardSprite()
+                this.batch_.addChild(cardSprite);
+            }
+            cardSprite.initData(this.my.handCards[i])
+            cardSprite.initView(true, FightConstants.big_card)
+            cardSprite.setPosition(display.cx, display.top + 40)
+            cardSprite.setTouch(this.onCardTouchEnd.bind(this))
+            this.myHandCardSprites.push(cardSprite)
+        }
+    },
+    updateMyGroupCardSprites: function () {
+        this.myGroupCardSprites.forEach(cs => {
+            cs.setVisible(false)
+        })
+        var cardSprite 
+        var group
+        const oldMyGroupCardSprites = this.myGroupCardSprites
+        this.myGroupCardSprites = []
+        for (var i = 0; i < this.my.groupCards.length; i++) {
+            group = this.my.groupCards[i]
+            for (var j = 0; j < group.length; j++) {
+                cardSprite = oldMyGroupCardSprites.pop()
+                if (!cardSprite) {
+                    cardSprite = new CardSprite()
+                    this.batch_.addChild(cardSprite)
+                }
+                cardSprite.initData(group[j])
+                cardSprite.setVisible(true)
+                cardSprite.initView(true, FightConstants.small_card)
+                cardSprite.setPosition(display.left + 50 + i * 30, display.bottom + 50 + j * 30)
+                this.myGroupCardSprites.push(cardSprite)
+            }
+        }
+    },
+    // 更新上家的组合牌
+    updatePreGroupCardSprites: function () {
+        this.preGroupCardSprites.forEach(cs => {
+            cs.setVisible(false)
+        })
+        var cardSprite 
+        var group
+        const oldPreGroupCardSprites = this.preGroupCardSprites
+        this.preGroupCardSprites = []
+        for (var i = 0; i < this.pre.groupCards.length; i++) {
+            group = this.pre.groupCards[i]
+            for (var j = 0; j < group.length; j++) {
+                cardSprite = oldPreGroupCardSprites.pop()
+                if (!cardSprite) {
+                    cardSprite = new CardSprite()
+                    this.batch_.addChild(cardSprite)
+                }
+                cardSprite.initData(group[j])
+                cardSprite.setVisible(true)
+                cardSprite.initView(true, FightConstants.small_card)
+                cardSprite.setPosition(display.left + 50 + i * 30, display.cy + 50 + j * 30)
+                this.preGroupCardSprites.push(cardSprite)
+            }
+        }
+    },
+    // 更新下家的组合牌
+    updateNextGroupCardSprites: function () {
+        this.nextGroupCardSprites.forEach(cs => {
+            cs.setVisible(false)
+        })
+        var cardSprite 
+        var group
+        const oldNextGroupCardSprites = this.nextGroupCardSprites
+        this.nextGroupCardSprites = []
+        for (var i = 0; i < this.next.groupCards.length; i++) {
+            group = this.next.groupCards[i]
+            for (var j = 0; j < group.length; j++) {
+                cardSprite = oldNextGroupCardSprites.pop()
+                if (!cardSprite) {
+                    cardSprite = new CardSprite()
+                    this.batch_.addChild(cardSprite)
+                }
+                cardSprite.initData(group[j])
+                cardSprite.setVisible(true)
+                cardSprite.initView(true, FightConstants.small_card)
+                cardSprite.setPosition(display.cx + 50 + i * 30, display.cy + 50 + j * 30)
+                this.nextGroupCardSprites.push(cardSprite)
+            }
+        }
+    },
+    updateMyHandCardSpritesOrder: function () {
+        this.myHandCardSprites.forEach(cardSprite => {
             cardSprite.setVisible(false)
         })
         //排列我的牌
@@ -336,7 +423,7 @@ var FightLayer = BaseScene.extend({
             for (var j = 0; j < oneOutputCardArr.length; j++) {
                 var y = display.bottom + 115 + j * 115 / 2;
                 var oneOutputCard = oneOutputCardArr[j];
-                var cardSprite = this.myCardSprites[index];
+                var cardSprite = this.myHandCardSprites[index];
                 cardSprite.setCardArrayIndex(i, j);
                 cardSprite.initData(oneOutputCard);
                 cardSprite.initView(true, FightConstants.big_card);

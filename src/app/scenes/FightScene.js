@@ -79,6 +79,9 @@ var FightLayer = BaseScene.extend({
             onTouchEndedHandle: () => {
                 const action = { name: Actions.Peng, data: this.canPengCards }
                 PomeloApi.sendAction(action)
+
+                this.pengSprite.setVisible(false)
+                this.pengSprite.setTouchEnabled(false)
             }
         })
         this.pengSprite.setTouchEnabled(false)
@@ -87,6 +90,16 @@ var FightLayer = BaseScene.extend({
         // 吃按钮
         this.chiSprite = display.newSprite('#oprate_chi0.png', display.right - 100, display.cy + 100)
         this.chiSprite.setVisible(false)
+        TouchUtil.addTouchEventListener(this.chiSprite, {
+            onTouchEndedHandle: () => {
+                const action = { name: Actions.Chi, data: this.canEatCards }
+                PomeloApi.sendAction(action)
+
+                this.chiSprite.setVisible(false)
+                this.chiSprite.setTouchEnabled(false)
+            }
+        })
+        this.chiSprite.setTouchEnabled(false)
         this.tipLayer_.addChild(this.chiSprite)
 
         // 胡按钮
@@ -116,7 +129,7 @@ var FightLayer = BaseScene.extend({
                 break;
             case Notifications.checkSt: // 请求出牌
                 this.canSt = true
-                this.setVisibleWithFingerTips(true, {x: display.cx, y: display.cy})
+                this.setVisibleWithFingerTips(true, { x: display.cx, y: display.cy })
                 break
             case Notifications.onPoker:
                 this.onPoker(notification.data)
@@ -124,11 +137,14 @@ var FightLayer = BaseScene.extend({
             case Notifications.checkPeng:
                 this.checkPeng(notification.data)
                 break
-            case Notifications.onPeng: 
+            case Notifications.onPeng:
                 this.onPeng(notification.data)
                 break
             case Notifications.checkEat:
                 this.checkEat(notification.data)
+                break
+            case Notifications.onEat:
+                this.onEat(notification.data)
                 break
             default:
                 break;
@@ -190,6 +206,7 @@ var FightLayer = BaseScene.extend({
         this.pengSprite.setTouchEnabled(false)
 
         this.chiSprite.setVisible(false)
+        this.chiSprite.setTouchEnabled(false)
         this.closeSprite.setVisible(false)
 
         this.setVisibleWithCountDownTimerTips(false)
@@ -222,6 +239,7 @@ var FightLayer = BaseScene.extend({
         this.pengSprite.setTouchEnabled(false)
 
         this.chiSprite.setVisible(false)
+        this.chiSprite.setTouchEnabled(false)
         this.closeSprite.setVisible(false)
 
         this.setVisibleWithCountDownTimerTips(false)
@@ -231,6 +249,7 @@ var FightLayer = BaseScene.extend({
             if (!!this.canEatCards) {
                 console.log('可以吃的牌', this.canEatCards)
                 this.chiSprite.setVisible(true)
+                this.chiSprite.setTouchEnabled(true)
                 this.closeSprite.setVisible(true)
             } else {
                 // 发送无操纵指令
@@ -240,6 +259,11 @@ var FightLayer = BaseScene.extend({
         } else {
             this.setVisibleWithCountDownTimerTips(true)
         }
+    },
+    onEat: function (data) {
+        console.log('收到玩家吃操纵', data)
+        this.initRoomInfo(data)
+        this.orderMyCard()
     },
     onCardTouchEnd(cardSprite, data) {
         if (data.lastY > display.cy && this.canSt) {

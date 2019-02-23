@@ -53,11 +53,8 @@ CardUtil.ServerNotify = {
 //   Array[2]
 // ]
 CardUtil.riffle = function(cards) {
-  // console.log("cards: ", cards);
   var countedCards = _.countBy(cards, function(c){return c;});
   var riffledCards = [];
-  console.log("countedCards: ", countedCards);
-
 
   // 1. 四张、三张
   _.each(countedCards, function(value, key){
@@ -189,12 +186,8 @@ CardUtil.riffle = function(cards) {
     riffledCards.push(countedCardsArray);
   }
 
-  console.log('#riffledCards: ', riffledCards, _.sortBy(cards,function(c){return c;}));
   return riffledCards;
 };
-
-
-
 
 /**
  * 返回胡息数, 最小单位是四张，三张，一句话(二七十，一二三; 壹贰叁、贰柒拾)
@@ -451,7 +444,7 @@ CardUtil.canPeng = function(cardsOnHand, currentCard){
     canPeng = [currentCard, currentCard];
   }
   return canPeng;
-};
+}
 
 CardUtil.canGang = function(cardsOnHand, cardsOnTable, currentCard){
   var canGang = false;
@@ -478,7 +471,6 @@ CardUtil.canGang = function(cardsOnHand, cardsOnTable, currentCard){
 // 3. 大小混搭
 CardUtil.canChi = function(cards, currentCard){
   console.log('判断是否能吃', cards, currentCard)
-  var canChi = false;
   var canChiCards = []
   var countedCards = _.countBy(cards, function(c){return c;});
   _.each(countedCards, function(value, key){
@@ -487,37 +479,41 @@ CardUtil.canChi = function(cards, currentCard){
     }
   });
 
-  var smallCount, bigCount, diff;
-  if (countedCards[currentCard-1]){
-    if (countedCards[currentCard-2] && currentCard !== 11 && currentCard !== 12){
-      canChi = true;
-    } else if (countedCards[currentCard+1] && currentCard !== 10 && currentCard !== 11){
-      canChi = true;
+  // 比方 currentCard = 8
+  if (countedCards[currentCard - 1]) {
+    if (countedCards[currentCard - 2] && currentCard !== 11 && currentCard !== 12) {
+      canChiCards.push([currentCard - 1, currentCard - 2]) // 判断8在尾部 查询 6 7 '8'  尾牌不能等于 11 12
+    } else if (countedCards[currentCard + 1] && currentCard !== 10 && currentCard !== 11) {
+      canChiCards.push([currentCard - 1, currentCard + 1]) // 判断8在中部 查询 7 '8' 9  中牌不能等于 10 11
     }
-  } else if (countedCards[currentCard+1]){
-    if (countedCards[currentCard-1] && currentCard !== 10 && currentCard > 11){
-      canChi = true;
-    } else if (countedCards[currentCard+2] && currentCard  !==  9 && currentCard > 10){
-      canChi = true;
-    }
-  } else if (currentCard < 11){
-    smallCount = countedCards[currentCard] || 0;
-    bigCount = countedCards[currentCard + 10] || 0;
-    diff = _.difference([2,7,10], currentCard);
-    if (smallCount + bigCount > 1){
-      canChi = true;
-    } else if (diff.length !== 3 && countedCards[diff[0]] && countedCards[diff[1]]){
-      canChi = true;
-    }
-  } else if (currentCard > 10){
-    smallCount = countedCards[currentCard - 10] || 0;
-    bigCount = countedCards[currentCard] || 0;
-    diff = _.difference([12,17,20], currentCard);
-    if (smallCount + bigCount > 1){
-      canChi = true;
-    } else if (diff.length !== 3 && countedCards[diff[0]] && countedCards[diff[1]]){
-      canChi = true;
+  } else if (countedCards[currentCard + 1]) {
+    if (countedCards[currentCard + 2]) {
+      canChiCards.push([currentCard + 1, currentCard + 2]) // 判断8在首部 查询 '8' 9 10 首牌不能等于 9 10
     }
   }
-  return canChi;
-};
+
+  if (currentCard < 11) {
+    if (countedCards[currentCard] && countedCards[currentCard + 10]){
+      canChiCards.push([currentCard, currentCard + 10]) // 判断 8 8 18
+    }
+    if (countedCards[currentCard + 10] > 2) {
+      canChiCards.push([currentCard + 10, currentCard + 10]) // 判断 8 18 18
+    }
+  } else {
+    if (countedCards[currentCard] && countedCards[currentCard - 10]){
+      canChiCards.push([currentCard, currentCard - 10]) // 判断 8 8 18
+    }
+    if (countedCards[currentCard - 10] > 2) {
+      canChiCards.push([currentCard - 10, currentCard - 10]) // 判断 8 18 18
+    }
+
+    if (canChiCards.length > 0) {
+      return canChiCards
+    } else {
+      return null
+    }
+  }
+
+
+
+}
